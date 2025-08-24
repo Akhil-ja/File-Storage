@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ConfirmationModal from "./ConfirmationModal";
 
 interface FileItem {
   _id: string;
@@ -36,6 +37,9 @@ const FileList: React.FC<FileListProps> = ({
   searchQuery,
   fileTypeFilter,
 }) => {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+
   const totalPages = Math.ceil(totalFiles / 10);
 
   const handleDownload = async (fileId: string, originalName: string) => {
@@ -56,10 +60,15 @@ const FileList: React.FC<FileListProps> = ({
     }
   };
 
-  const handleDelete = async (fileId: string) => {
-    if (window.confirm("Are you sure you want to delete this file?")) {
+  const handleDelete = (fileId: string) => {
+    setFileToDelete(fileId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (fileToDelete) {
       try {
-        const response = await api.delete(`/files/${fileId}`);
+        const response = await api.delete(`/files/${fileToDelete}`);
         if (response.data.success) {
           toast.success(response.data.message);
           onFileAction();
@@ -67,6 +76,9 @@ const FileList: React.FC<FileListProps> = ({
       } catch (error: any) {
         console.error("Delete failed:", error);
         toast.error(error.response?.data?.message || "Failed to delete file.");
+      } finally {
+        setIsDeleteModalOpen(false);
+        setFileToDelete(null);
       }
     }
   };
@@ -111,47 +123,51 @@ const FileList: React.FC<FileListProps> = ({
         <p className="text-gray-600">No files uploaded yet.</p>
       ) : (
         <>
-          <ul className="divide-y divide-gray-200">
-            {files.map((file) => (
-              <li
-                key={file._id}
-                className="py-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-lg font-semibold text-gray-800">
-                    {file.originalName}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Type: {file.fileType} | Size:{" "}
-                    {(file.size / 1024).toFixed(2)} KB
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Uploaded: {new Date(file.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleView(file._id, file.fileType)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => handleDownload(file._id, file.originalName)}
-                    className="bg-green-500 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
-                  >
-                    Download
-                  </button>
-                  <button
-                    onClick={() => handleDelete(file._id)}
-                    className="bg-red-500 hover:bg-red-700 text-white text-sm py-1 px-3 rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="h-200">
+            <ul className="divide-y divide-gray-200">
+              {files.map((file) => (
+                <li
+                  key={file._id}
+                  className="py-4 flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {file.originalName}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Type: {file.fileType} | Size:{" "}
+                      {(file.size / 1024).toFixed(2)} KB
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Uploaded: {new Date(file.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleView(file._id, file.fileType)}
+                      className="bg-blue-500 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleDownload(file._id, file.originalName)
+                      }
+                      className="bg-green-500 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
+                    >
+                      Download
+                    </button>
+                    <button
+                      onClick={() => handleDelete(file._id)}
+                      className="bg-red-500 hover:bg-red-700 text-white text-sm py-1 px-3 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div className="flex justify-between items-center mt-4">
             <button
               onClick={() => onPageChange(currentPage - 1)}
@@ -173,6 +189,13 @@ const FileList: React.FC<FileListProps> = ({
           </div>
         </>
       )}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this file? This action cannot be undone."
+      />
     </div>
   );
 };
