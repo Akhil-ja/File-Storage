@@ -1,0 +1,120 @@
+"use client";
+
+import React from "react";
+import api from "@/lib/api";
+import toast from "react-hot-toast";
+
+interface FileItem {
+  _id: string;
+  fileName: string;
+  originalName: string;
+  fileType: string;
+  size: number;
+  createdAt: string;
+}
+
+interface FileListProps {
+  files: FileItem[];
+  onFileAction: () => void;
+}
+
+const FileList: React.FC<FileListProps> = ({ files, onFileAction }) => {
+  const handleDownload = async (fileId: string, originalName: string) => {
+    try {
+      const response = await api.get(`/files/${fileId}`);
+      if (response.data.success && response.data.data.url) {
+        const link = document.createElement("a");
+        link.href = response.data.data.url;
+        link.setAttribute("download", originalName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success("File download initiated.");
+      }
+    } catch (error: any) {
+      console.error("Download failed:", error);
+      toast.error(error.response?.data?.message || "Failed to download file.");
+    }
+  };
+
+  const handleDelete = async (fileId: string) => {
+    if (window.confirm("Are you sure you want to delete this file?")) {
+      try {
+        const response = await api.delete(`/files/${fileId}`);
+        if (response.data.success) {
+          toast.success(response.data.message);
+          onFileAction();
+        }
+      } catch (error: any) {
+        console.error("Delete failed:", error);
+        toast.error(error.response?.data?.message || "Failed to delete file.");
+      }
+    }
+  };
+
+  const handleView = async (fileId: string, fileType: string) => {
+    try {
+      const response = await api.get(`/files/${fileId}?action=view`);
+      if (response.data.success && response.data.data.url) {
+        window.open(response.data.data.url, "_blank");
+        toast.success("File opened for viewing.");
+      }
+    } catch (error: any) {
+      console.error("View failed:", error);
+      toast.error(error.response?.data?.message || "Failed to view file.");
+    }
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-7xl">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Your Files</h2>
+      {files.length === 0 ? (
+        <p className="text-gray-600">No files uploaded yet.</p>
+      ) : (
+        <ul className="divide-y divide-gray-200">
+          {files.map((file) => (
+            <li
+              key={file._id}
+              className="py-4 flex items-center justify-between"
+            >
+              <div>
+                <p className="text-lg font-semibold text-gray-800">
+                  {file.originalName}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Type: {file.fileType} | Size: {(file.size / 1024).toFixed(2)}{" "}
+                  KB
+                </p>
+                <p className="text-sm text-gray-500">
+                  Uploaded: {new Date(file.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleView(file._id, file.fileType)}
+                  className="bg-blue-500 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => handleDownload(file._id, file.originalName)}
+                  className="bg-green-500 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
+                >
+                  Download
+                </button>
+                <button
+                  onClick={() => handleDelete(file._id)}
+                  className="bg-red-500 hover:bg-red-700 text-white text-sm py-1 px-3 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default FileList;
