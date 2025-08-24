@@ -41,7 +41,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const handleUpload = async () => {
     if (!selectedFile) {
       setError("Please select a file to upload.");
-      toast.error("Please select a file to upload.");
       return;
     }
 

@@ -7,6 +7,7 @@ import FileUpload from "@/components/FileUpload";
 import FileList from "@/components/FileList";
 import Navbar from "@/components/Navbar";
 import toast from "react-hot-toast";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface FileItem {
   _id: string;
@@ -22,15 +23,29 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [totalFiles, setTotalFiles] = useState(0);
   const [filesLoading, setFilesLoading] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fileTypeFilter, setFileTypeFilter] = useState("");
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const fetchFiles = useCallback(async () => {
     setFilesLoading(true);
+    console.log("Filtering by:", fileTypeFilter);
     try {
-      const response = await api.get("/files");
+      const response = await api.get("/files", {
+        params: {
+          page: currentPage,
+          search: debouncedSearchQuery,
+          fileType: fileTypeFilter,
+        },
+      });
       if (response.data.success) {
-        setFiles(response.data.data);
+        setFiles(response.data.data.files);
+        setTotalFiles(response.data.data.total);
       }
     } catch (error: any) {
       console.error("Failed to fetch files:", error);
@@ -45,14 +60,17 @@ const DashboardPage: React.FC = () => {
     } finally {
       setFilesLoading(false);
     }
-  }, [router]);
+  }, [router, currentPage, debouncedSearchQuery, fileTypeFilter]);
 
   useEffect(() => {
-    const checkAuthAndFetchFiles = async () => {
+    fetchFiles();
+  }, [fetchFiles]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
       try {
         await api.get("/files");
         setMessage("Dashboard");
-        fetchFiles();
       } catch (error: any) {
         console.error("Authentication check failed:", error);
         if (error.response && error.response.status === 401) {
@@ -68,8 +86,8 @@ const DashboardPage: React.FC = () => {
       }
     };
 
-    checkAuthAndFetchFiles();
-  }, [router, fetchFiles]);
+    checkAuth();
+  }, [router]);
 
   if (loading) {
     return (
@@ -88,7 +106,17 @@ const DashboardPage: React.FC = () => {
         {filesLoading ? (
           <p>Loading files...</p>
         ) : (
-          <FileList files={files} onFileAction={fetchFiles} />
+          <FileList
+            files={files}
+            onFileAction={fetchFiles}
+            totalFiles={totalFiles}
+            onPageChange={setCurrentPage}
+            onSearchQueryChange={setSearchQuery}
+            onFilter={setFileTypeFilter}
+            currentPage={currentPage}
+            searchQuery={searchQuery}
+            fileTypeFilter={fileTypeFilter}
+          />
         )}
       </div>
 

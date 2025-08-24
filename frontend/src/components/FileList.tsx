@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -16,9 +16,28 @@ interface FileItem {
 interface FileListProps {
   files: FileItem[];
   onFileAction: () => void;
+  totalFiles: number;
+  onPageChange: (page: number) => void;
+  onSearchQueryChange: (query: string) => void;
+  onFilter: (fileType: string) => void;
+  currentPage: number;
+  searchQuery: string;
+  fileTypeFilter: string;
 }
 
-const FileList: React.FC<FileListProps> = ({ files, onFileAction }) => {
+const FileList: React.FC<FileListProps> = ({
+  files,
+  onFileAction,
+  totalFiles,
+  onPageChange,
+  onSearchQueryChange,
+  onFilter,
+  currentPage,
+  searchQuery,
+  fileTypeFilter,
+}) => {
+  const totalPages = Math.ceil(totalFiles / 10);
+
   const handleDownload = async (fileId: string, originalName: string) => {
     try {
       const response = await api.get(`/files/${fileId}`);
@@ -68,50 +87,91 @@ const FileList: React.FC<FileListProps> = ({ files, onFileAction }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-7xl">
       <h2 className="text-xl font-bold mb-4 text-gray-800">Your Files</h2>
+      <div className="flex justify-between mb-4">
+        <input
+          type="text"
+          placeholder="Search files..."
+          value={searchQuery}
+          onChange={(e) => onSearchQueryChange(e.target.value)}
+          className="border rounded px-2 py-1"
+        />
+        <select
+          value={fileTypeFilter}
+          onChange={(e) => onFilter(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
+          <option value="">All file types</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/png">PNG</option>
+          <option value="application/pdf">PDF</option>
+          <option value="text/plain">Text</option>
+        </select>
+      </div>
       {files.length === 0 ? (
         <p className="text-gray-600">No files uploaded yet.</p>
       ) : (
-        <ul className="divide-y divide-gray-200">
-          {files.map((file) => (
-            <li
-              key={file._id}
-              className="py-4 flex items-center justify-between"
+        <>
+          <ul className="divide-y divide-gray-200">
+            {files.map((file) => (
+              <li
+                key={file._id}
+                className="py-4 flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-lg font-semibold text-gray-800">
+                    {file.originalName}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Type: {file.fileType} | Size:{" "}
+                    {(file.size / 1024).toFixed(2)} KB
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Uploaded: {new Date(file.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleView(file._id, file.fileType)}
+                    className="bg-blue-500 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleDownload(file._id, file.originalName)}
+                    className="bg-green-500 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
+                  >
+                    Download
+                  </button>
+                  <button
+                    onClick={() => handleDelete(file._id)}
+                    className="bg-red-500 hover:bg-red-700 text-white text-sm py-1 px-3 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-between items-center mt-4">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l"
             >
-              <div>
-                <p className="text-lg font-semibold text-gray-800">
-                  {file.originalName}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Type: {file.fileType} | Size: {(file.size / 1024).toFixed(2)}{" "}
-                  KB
-                </p>
-                <p className="text-sm text-gray-500">
-                  Uploaded: {new Date(file.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleView(file._id, file.fileType)}
-                  className="bg-blue-500 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
-                >
-                  View
-                </button>
-                <button
-                  onClick={() => handleDownload(file._id, file.originalName)}
-                  className="bg-green-500 hover:bg-green-700 text-white text-sm py-1 px-3 rounded"
-                >
-                  Download
-                </button>
-                <button
-                  onClick={() => handleDelete(file._id)}
-                  className="bg-red-500 hover:bg-red-700 text-white text-sm py-1 px-3 rounded"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
