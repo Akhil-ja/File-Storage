@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import errorHandler from "./middleware/errorMiddleware";
 import morgan from "morgan";
 import cors from "cors";
+import apiRoutes from "./routes/index";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -27,6 +28,8 @@ if (process.env.NODE_ENV === "development") {
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use("/api", apiRoutes);
 
 app.get("/", (req, res) => {
   res.send("Heloo");
