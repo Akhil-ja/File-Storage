@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { allowedMimeTypes, maxFileSize } from "@/lib/constants";
 
 interface FileUploadProps {
   onUploadSuccess: () => void;
@@ -18,8 +19,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+    const file = event.target.files && event.target.files[0];
+    if (file) {
+      if (!allowedMimeTypes.includes(file.type)) {
+        toast.error("Invalid file type. Please select a valid file.");
+        setSelectedFile(null);
+        return;
+      }
+
+      if (file.size > maxFileSize) {
+        toast.error("File size exceeds 20MB. Please select a smaller file.");
+        setSelectedFile(null);
+        return;
+      }
+
+      setSelectedFile(file);
       setError(null);
     }
   };
