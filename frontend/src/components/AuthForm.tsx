@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 interface AuthFormProps {
   type: "login" | "register";
@@ -20,7 +21,15 @@ const AuthForm: React.FC<AuthFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(email, password);
+    if (email.trim() === "") {
+      toast.error("Email cannot be empty");
+      return;
+    }
+    if (password.trim() === "") {
+      toast.error("Password cannot be empty");
+      return;
+    }
+    onSubmit(email.trim(), password.trim());
   };
 
   return (
@@ -45,6 +54,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onBlur={(e) => setEmail(e.target.value.trim())}
           required
         />
       </div>
@@ -61,6 +71,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          onBlur={(e) => setPassword(e.target.value.trim())}
           required
         />
       </div>
