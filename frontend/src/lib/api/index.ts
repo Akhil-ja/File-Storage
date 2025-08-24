@@ -12,9 +12,12 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
     if (
       error.response.status === 401 &&
-      error.response.data.message === "Access token expired" &&
+      (error.response.data.message === "Access token expired" ||
+        error.response.data.message === "Not authorized, token failed" ||
+        error.response.data.message === "Not authorized, no token") &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
@@ -24,9 +27,9 @@ api.interceptors.response.use(
           {},
           { withCredentials: true }
         );
+
         return api(originalRequest);
       } catch (refreshError: any) {
-        console.error("Failed to refresh token", refreshError);
         toast.error(
           refreshError.response?.data?.message ||
             "Session expired. Please log in again."
