@@ -2,8 +2,10 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
 import path from "path";
-import cors from "cors";
 import cookieParser from "cookie-parser";
+import errorHandler from "./middleware/errorMiddleware";
+import morgan from "morgan";
+import cors from "cors";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -18,13 +20,19 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(cookieParser());
+
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.send("Heloo");
 });
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
