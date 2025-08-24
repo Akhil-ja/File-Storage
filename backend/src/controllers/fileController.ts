@@ -35,7 +35,14 @@ export const getFiles = async (
     return next(new AppError("User not authenticated", 401));
   }
   try {
-    const files = await fileService.getFiles(req.user);
+    const { search, page, limit, fileType } = req.query;
+    const files = await fileService.getFiles(
+      req.user,
+      search as string,
+      parseInt(page as string) || 1,
+      parseInt(limit as string) || 10,
+      fileType as string
+    );
     res.status(200).json({
       success: true,
       message: "Files retrieved successfully",

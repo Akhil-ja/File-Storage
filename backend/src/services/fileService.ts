@@ -33,10 +33,32 @@ export const upload = async (
   }
 };
 
-export const getFiles = async (user: IUser): Promise<IFile[]> => {
+export const getFiles = async (
+  user: IUser,
+  search: string,
+  page: number,
+  limit: number,
+  fileType: string
+): Promise<{ files: IFile[]; total: number }> => {
   try {
-    const files = await File.find({ uploadedBy: user._id });
-    return files;
+    const query: any = { uploadedBy: user._id };
+
+    if (search) {
+      query.originalName = { $regex: search, $options: "i" };
+    }
+
+    if (fileType) {
+      query.fileType = fileType;
+    }
+
+    const files = await File.find(query)
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .exec();
+
+    const total = await File.countDocuments(query);
+
+    return { files, total };
   } catch (error: any) {
     console.error("Original S3 getFiles error:", error);
     throw new AppError("Failed to retrieve files", 500);
