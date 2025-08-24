@@ -4,11 +4,7 @@ import React, { useState } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { allowedMimeTypes, maxFileSize } from "@/lib/constants";
-
-interface FileUploadProps {
-  onUploadSuccess: () => void;
-  onClose: () => void;
-}
+import { FileUploadProps } from "@/types";
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onUploadSuccess,

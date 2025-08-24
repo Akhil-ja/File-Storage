@@ -2,13 +2,7 @@
 
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-interface AuthFormProps {
-  type: "login" | "register";
-  onSubmit: (email: string, password: string) => void;
-  loading: boolean;
-  error: string | null;
-}
+import { AuthFormProps } from "@/types";
 
 const AuthForm: React.FC<AuthFormProps> = ({
   type,

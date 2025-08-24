@@ -8,15 +8,7 @@ import FileList from "@/components/FileList";
 import Navbar from "@/components/Navbar";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
-
-interface FileItem {
-  _id: string;
-  fileName: string;
-  originalName: string;
-  fileType: string;
-  size: number;
-  createdAt: string;
-}
+import { FileItem } from "@/types";
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();

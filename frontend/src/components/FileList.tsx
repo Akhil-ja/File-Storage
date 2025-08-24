@@ -4,27 +4,7 @@ import React, { useState, useEffect } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal";
-
-interface FileItem {
-  _id: string;
-  fileName: string;
-  originalName: string;
-  fileType: string;
-  size: number;
-  createdAt: string;
-}
-
-interface FileListProps {
-  files: FileItem[];
-  onFileAction: () => void;
-  totalFiles: number;
-  onPageChange: (page: number) => void;
-  onSearchQueryChange: (query: string) => void;
-  onFilter: (fileType: string) => void;
-  currentPage: number;
-  searchQuery: string;
-  fileTypeFilter: string;
-}
+import { FileListProps } from "@/types";
 
 const FileList: React.FC<FileListProps> = ({
   files,
